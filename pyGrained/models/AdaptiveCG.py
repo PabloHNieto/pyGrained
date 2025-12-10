@@ -1,4 +1,4 @@
-from .. import CoarseGrainedBase
+from .... import CoarseGrainedBase
 
 import numpy as np
 from Bio.PDB import PDBParser
@@ -35,10 +35,9 @@ class ChainAdapticeCG:
         # self.R_opt, self.chi_opt = self.optimize()
 
     def _initialize_beads(self):
-        ## TODO: Probar a que todas sean en las misma cordeenada para ver qué ocurre
+        ## TODO: Test if  initializing beads in the same position lead to proper CG
         """
-        Inicializa las posiciones de los beads usando KMeans.
-        Esto proporciona centros razonables para iniciar la iteración.
+        Initializes bead positions using KMeans.
         """
         kmeans = KMeans(n_clusters=self.n_beads, n_init=10)
         kmeans.fit(self.coords)
@@ -48,9 +47,9 @@ class ChainAdapticeCG:
     
     def compute_chi(self):
         """
-        Calcula χ(r_i) para cada átomo y bead.
+        Calculates χ(r_i) para each atom and bead.
         χ_iμ = Δ(r_i - R_μ) / Σ_ν Δ(r_i - R_ν)
-        donde Δ es una Gaussiana con desviación sigma.
+        where Δ is a Gaussiana with deviationsigma.
         """
         diff = self.coords[:, None, :] - self.R[None, :, :]
         dist2 = np.sum(diff**2, axis=2)  # (N,M)
@@ -66,7 +65,7 @@ class ChainAdapticeCG:
 
     def update_R(self, chi):
         """
-        Actualiza las posiciones de los beads siguiendo:
+        Refreshes bead positions using:
         R_μ = Σ_i [m_i r_i χ_iμ] / Σ_i [m_i χ_iμ]
         """
         # weighted = self.coords[:, None, :] * (self.masses[:, None, None] * chi)
@@ -79,8 +78,8 @@ class ChainAdapticeCG:
 
     def optimize(self, max_iter=100, tol=1e-4, debug=False):
         """
-        Itera Voronoi hasta convergencia.
-        Converge cuando ningún bead se mueve más de tol.
+        Iterate until convergences.
+        Convergens when any bead moves more than the tolerance (tol).
         """
         # R_old = self.R_init.copy()
         for it in range(max_iter):
@@ -106,14 +105,6 @@ class ChainAdapticeCG:
         return self.R, chi
 
 class AdaptiveCG(CoarseGrainedBase):
-    """
-    Implementación completa del método Soft-Voronoi usando Biopython.
-    - Carga un PDB con Bio.PDB.
-    - Extrae coordenadas y masas atómicas.
-    - Inicializa los beads con KMeans.
-    - Itera cálculo de chi y actualización de R hasta convergencia.
-    """
-
     def __init__(self, name:str, 
                  inputPDBfilePath:str, 
                  params:dict, 
@@ -257,6 +248,7 @@ class AdaptiveCG(CoarseGrainedBase):
         return dcond, indexes, intra_chain_distances, inter_chain_distances
     
     def write_pdb(self):
+        ### WIP
         # from moleculekit.molecule import Molecule
 
         # mol = Molecule()
@@ -287,6 +279,18 @@ class AdaptiveCG(CoarseGrainedBase):
         """
         Visualiza los beads y la estructura original en ChimeraX.
         """
+
+        try:
+            import os  
+            os.system("chimerax --version")
+        except:
+            error_message = (
+            f"❌ Error: ChimeraX executable not found in system PATH.\n"
+            "Please ensure ChimeraX is installed and its directory is added to your system's PATH."
+            "If you do not have it, you can download it here: https://www.cgl.ucsf.edu/chimerax/download.html"
+            )
+            raise FileNotFoundError(error_message)
+        
         with open(out_script, "w") as f:
 
             # escala lineal de masas a radios
