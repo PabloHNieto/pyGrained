@@ -1,13 +1,14 @@
-from .... import CoarseGrainedBase
+from .. import CoarseGrainedBase
 
 import numpy as np
 from Bio.PDB import PDBParser
 from sklearn.cluster import KMeans
 from copy import deepcopy
+import os
 
 import logging
 
-class ChainAdapticeCG:
+class ChainAdaptiveCG:
     def __init__(self, n_beads:int, 
                  coords:np.ndarray, 
                  masses:np.ndarray, 
@@ -25,7 +26,9 @@ class ChainAdapticeCG:
         else:
             self.n_beads = n_beads
             self.R_init = self._initialize_beads()
-            self.R_init = np.tile(np.mean(self.coords, axis=0), self.n_beads).reshape(-1,3)
+            ## This for checking what happens if initial beads are all placed in the same coordinates
+            ## For the moment it fails, the whole thing collapses
+            # self.R_init = np.tile(np.mean(self.coords, axis=0), self.n_beads).reshape(-1,3)
             # import pdb;pdb.set_trace()
         
         self.R = self.R_init.copy()
@@ -56,9 +59,12 @@ class ChainAdapticeCG:
 
         # Gaussianas (Δ)
         weights = np.exp(-dist2 / (2 * self.sigma**2))
+        sum_weights = np.sum(weights, axis=1, keepdims=True)
+        sum_weights[sum_weights == 0] = 1e-12  # Avoid division by zero
+        chi = weights / sum_weights
 
         # Normalización → χ
-        chi = weights / np.sum(weights, axis=1, keepdims=True)
+        # chi = weights / np.sum(weights, axis=1, keepdims=True)
         # if np.any(np.isnan(chi)):
         #     import pdb;pdb.set_trace()
         return chi
@@ -109,8 +115,7 @@ class AdaptiveCG(CoarseGrainedBase):
                  inputPDBfilePath:str, 
                  params:dict, 
                  debug = False):
-        
-        self.inputPDBfilePath = inputPDBfilePath
+        self.inputPDBfilePath = os.path.abspath(inputPDBfilePath)
         self.resolution = params.get("resolution", 100)
         # self.n_beads = params.get("nBeads", 100)
         self.sigma = params.get("sigma", 2)
@@ -162,7 +167,7 @@ class AdaptiveCG(CoarseGrainedBase):
             self.logger.info(f" Chain {leader_chain} has {tmp_coords.shape[0]} atoms and will be represented with {n_beads} beads.")
 
             tmp_masses = self.micro_masses[self.micro_chains == leader_chain]
-            tmp_chain_CG = ChainAdapticeCG(n_beads, tmp_coords, tmp_masses, sigma=self.sigma)
+            tmp_chain_CG = ChainAdaptiveCG(n_beads, tmp_coords, tmp_masses, sigma=self.sigma)
             tmp_chain_CG.optimize(max_iter=1000)
             self.classes_beads[tmp_class] = deepcopy(tmp_chain_CG)
             self.chain_beads[leader_chain] = deepcopy(tmp_chain_CG)
@@ -180,7 +185,7 @@ class AdaptiveCG(CoarseGrainedBase):
                 beads_coords = self.classes_beads[tmp_class].R_opt.copy()
                 R_init = (beads_coords - ref2orig) @ rot_matrix.as_matrix().T + ref2orig + trans_matrix 
 
-                cg_other_chain = ChainAdapticeCG(n_beads, tmp_coords_other_chain, tmp_masses_other_chain, sigma=self.sigma, R_init=R_init.copy())
+                cg_other_chain = ChainAdaptiveCG(n_beads, tmp_coords_other_chain, tmp_masses_other_chain, sigma=self.sigma, R_init=R_init.copy())
                 cg_other_chain.optimize(max_iter=500) 
 
                 self.chain_beads[ch] = deepcopy(cg_other_chain)
