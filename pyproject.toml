@@ -22,7 +22,7 @@ classifiers = [
         "Programming Language :: Python :: 3.9",
 ]
 dependencies = [
-    "pathlib","uuid","numpy","scipy"
+    "pathlib","uuid","numpy","scipy","tqdm","freesasa"
 ]
 
 [options]
