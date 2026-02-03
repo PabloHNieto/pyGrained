@@ -5,9 +5,18 @@ pdb_file1 = "./data/lizard_3tower.pdb"  # Replace with your PDB file path
 pdb_file2 = "./data/_mcps/6qi5_mcp.pdb"  # Replace with your PDB file path
 
 params = {
-    "resolution": 250, # Desired number of beads
-    # "nBeads": 20, # Desired number of beads
-    "sigma": .20  # Width parameter for Gaussian
+    "parameters": { 
+        "resolution": 250, # Desired number of beads
+        # "nBeads": 20, # Desired number of beads
+        "sigma": .20,  # Width parameter for Gaussian,
+        "steps": 1000, # Number of optimization steps
+        "bondsModel": {"name":"count"},
+        "nativeContactsModel":{"name":"CA", "parameters":{
+                       "epsilon":1.0,
+                       "D":1.0
+                   }},
+        },
+    "SASA": False
 }
 
 params2 = {
@@ -23,9 +32,9 @@ params2 = {
 }
 
 model = AdaptiveCG("test", pdb_file1, params=params)
-model.view()
-# model.write_pdb()
-# model = SBCG("test", pdb_file2, params=params2)
+# model.view()
+model.write_pdb("./data/lizard_3tower_CG.pdb")
+# model = SBCG("test", pdb_file1, params=params2)
 # model = AdaptiveCG("test", pdb_file, params=params)
 # model.view()
 
