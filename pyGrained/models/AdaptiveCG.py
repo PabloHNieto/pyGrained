@@ -564,7 +564,6 @@ class AdaptiveCG(CoarseGrainedBase):
         self.setState(state)
         self.setStructure(structure)
         self.setForceField(forceField)
-        import pdb;pdb.set_trace()
 
     def __generateCountBonds(self,structure,cgMap):
 
