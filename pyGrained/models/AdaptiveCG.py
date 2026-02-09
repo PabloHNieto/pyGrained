@@ -407,6 +407,7 @@ class AdaptiveCG(CoarseGrainedBase):
         elif bondsModelName == "count":
             self.logger.info(f"Generating count bonds ...")
             bonds = self.__generateCountBonds(self.getSpreadedStructure(),spreadedCgMap)
+        ## TODO: add my own bonds model, with a cut off 
         else:
             self.logger.error(f"Bonds model {bondsModelName} is not availble")
             raise Exception(f"Bonds model not available")
