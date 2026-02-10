@@ -10,10 +10,11 @@ params = {
         # "nBeads": 20, # Desired number of beads
         "sigma": .20,  # Width parameter for Gaussian,
         "steps": 1000, # Number of optimization steps
-        "bondsModel": {"name":"count"},
-        "nativeContactsModel":{"name":"CA", "parameters":{
-                       "epsilon":1.0,
-                       "D":1.0
+        "bondsModel": {"name":"AdaptiveCG", "parameters":{
+            "adaptiveCGCut": 20.0, # Cutoff distance for adaptive CG bonds
+        }},
+        "nativeContactsModel":{"name":"AdaptiveCG", "parameters":{
+                "adaptiveCGCut": 20.0, # Cutoff distance for adaptive CG native contacts
                    }},
         },
     "SASA": False
@@ -36,7 +37,7 @@ model = AdaptiveCG("test", pdb_file1, params=params)
 model.write_pdb("./data/lizard_3tower_CG.pdb")
 # model = SBCG("test", pdb_file1, params=params2)
 # model = AdaptiveCG("test", pdb_file, params=params)
-# model.view()
+model.view()
 
 # model = AdaptiveCG(pdb_file, n_beads, sigma)
 # R_opt, chi_opt = model.optimize(max_iter=3000)
